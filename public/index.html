@@ -39,8 +39,6 @@
 			align-items: center;
 		}
 
-		.upload-form div {}
-
 		.inputarea {
 			flex-grow: 1;
 			display: flex;
@@ -87,32 +85,34 @@
 	<script src="/socket.io/socket.io.js"></script>
 	<script>
 
-		const socket = io();
+		const socket = io(); // Web Socketの設定をする
 
+		document.querySelector(".fa-camera").addEventListener("click", () => {
+			// カメラアイコンが押されたら、
+			// 強制的に’<input type="file" name="imagefile" class="upload" accept="image/*">’が押されたことにする
+			document.querySelector(".upload").click();
+		})
+
+		// 文字を送信
 		document.querySelector(".submit").addEventListener("click", (e) => {
+			// 送信ボタンが押されたら
 			e.preventDefault();
 			const msg = document.querySelector(".message").value;
-			if (msg.length != 0) {
+			if (msg.length != 0) { // もしも入力された文字の長さが0じゃなければ
+				// サーバーの'http://localhost:3000/message'というアドレスに情報を送る
 				fetch("/message",
 					{
 						method: "POST",
 						body: `message=${msg}`,
 						headers: new Headers({ 'Content-type': 'application/x-www-form-urlencoded' })
 					}
-				).then(res => {
-					if (res.ok) {
-						res.json();
-					}
-				})
+				)
 			}
 		})
 
-		document.querySelector(".fa-camera").addEventListener("click", () => {
-			document.querySelector(".upload").click();
-		})
-
+		// 画像を送信
 		document.querySelector(".upload").addEventListener("change", (e) => {
-			e.preventDefault();
+			// 写真（カメラアイコン）で更新されたら
 			const photo = document.querySelector(".upload").files[0];
 			const fd = new FormData();
 			fd.append("imagefile", photo);
@@ -125,7 +125,12 @@
 					})
 			}
 		})
+
+		// 以下、サーバーから受信したときの処理
+
 		socket.on("imagemessage", (msg) => {
+			// サーバからWeb Socketで写真が飛んできたら
+			// HTMLのimgタグを作って画像を表示させる
 			console.log(msg)
 			const img = new Image();
 			img.src = "./uploads/" + msg.filename;
@@ -134,7 +139,10 @@
 				document.body.appendChild(img);
 			}
 		})
+
 		socket.on("textmessage", (msg) => {
+			// サーバからWeb Socketで文字が飛んできたら
+			// HTMLのdivタグを作って文字を表示させる
 			console.log(msg)
 			const talk = document.createElement("div");
 			talk.classList.add("talk");

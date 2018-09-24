@@ -17,6 +17,7 @@ app.use(bodyParser.json());
 var upload = multer({ dest: "./public/uploads/" });
 
 app.post("/upload", upload.single("imagefile"), (req, res) => {
+  // 'http://localhost:3000/upload'にアクセスがあったら
   console.log(req.file);
   console.log(req.body);
   io.emit("imagemessage", req.file);
@@ -24,15 +25,15 @@ app.post("/upload", upload.single("imagefile"), (req, res) => {
 });
 
 app.post("/message", (req, res) => {
-  //console.log(req.body);
+  // 'http://localhost:3000/message'にアクセスがあったら
   io.emit("textmessage", req.body);
   res.status(200).json(req.body);
 });
 
 io.on("connection", socket => {
-  console.log("a user connected");
+  console.log("ユーザーからのアクセスがありました");
   socket.on("disconnect", function() {
-    console.log("user disconnected");
+    console.log("ユーザーがアクセスを遮断しました");
   });
 });
 
