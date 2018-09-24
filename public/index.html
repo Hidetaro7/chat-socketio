@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Document</title>
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ"
+	 crossorigin="anonymous">
+
+	<style>
+		* {
+			box-sizing: border-box;
+		}
+
+		.talk div {
+			border-radius: 12px;
+			background-color: #ccc;
+			padding: 10px;
+			font-size: 80%;
+			display: inline-block;
+			margin-bottom: 10px;
+		}
+
+		.photo {
+			width: 150px;
+		}
+
+		.upload-form {
+			position: fixed;
+			width: 100%;
+			padding: 20px 20px;
+			bottom: 0;
+			left: 0;
+			border-top: 1px solid #ccc;
+			display: flex;
+			justify-content: space-around;
+			align-items: center;
+		}
+
+		.upload-form div {}
+
+		.inputarea {
+			flex-grow: 1;
+			display: flex;
+			margin-right: 20px;
+		}
+
+		.upload {
+			width: 10px;
+			opacity: 0;
+		}
+
+		.message {
+			font-size: 100%;
+			padding: 5px 5px;
+			flex-grow: 1;
+		}
+
+		.submit {
+			margin-left: 5px;
+			background-color: green;
+			border: none;
+			border-radius: 4px;
+			color: white;
+		}
+
+		.fa-camera {
+			font-size: 30px;
+		}
+	</style>
+</head>
+
+<body>
+	<form class="upload-form" action="/upload" enctype="multipart/form-data" method="post">
+		<div class="inputarea">
+			<input type="text" name="message" class="message">
+			<input class="submit" type="submit" value="送信">
+		</div>
+		<div>
+			<input type="file" name="imagefile" class="upload" accept="image/*">
+			<i class="fas fa-camera"></i>
+		</div>
+	</form>
+
+	<script src="/socket.io/socket.io.js"></script>
+	<script>
+
+		const socket = io();
+
+		document.querySelector(".submit").addEventListener("click", (e) => {
+			e.preventDefault();
+			const msg = document.querySelector(".message").value;
+			if (msg.length != 0) {
+				fetch("/message",
+					{
+						method: "POST",
+						body: `message=${msg}`,
+						headers: new Headers({ 'Content-type': 'application/x-www-form-urlencoded' })
+					}
+				).then(res => {
+					if (res.ok) {
+						res.json();
+					}
+				})
+			}
+		})
+
+		document.querySelector(".fa-camera").addEventListener("click", () => {
+			document.querySelector(".upload").click();
+		})
+
+		document.querySelector(".upload").addEventListener("change", (e) => {
+			e.preventDefault();
+			const photo = document.querySelector(".upload").files[0];
+			const fd = new FormData();
+			fd.append("imagefile", photo);
+			if (photo) {
+				fetch("/upload", { method: "POST", body: fd })
+					.then(res => {
+						if (res.ok) {
+							return res.json();
+						}
+					})
+			}
+		})
+		socket.on("imagemessage", (msg) => {
+			console.log(msg)
+			const img = new Image();
+			img.src = "./uploads/" + msg.filename;
+			img.classList.add("photo");
+			img.onload = () => {
+				document.body.appendChild(img);
+			}
+		})
+		socket.on("textmessage", (msg) => {
+			console.log(msg)
+			const talk = document.createElement("div");
+			talk.classList.add("talk");
+			talk.innerHTML = `<div>${msg.message}</div>`;
+			document.body.appendChild(talk);
+		})
+	</script>
+</body>
+
+</html>
